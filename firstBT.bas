@@ -1,5 +1,5 @@
-DEBUG.ON
-DEBUG.ECHO.ON
+!DEBUG.ON
+!DEBUG.ECHO.ON
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -26,7 +26,6 @@ IF conntype = 2
  UNTIL st=3
  SOCKET.SERVER.CLIENT.IP youip$
  PRINT "CONNECTED! to: " + youip$
-
  !maxclock = CLOCK() + 10000
  !do 
  ! socket.server.read.ready readyflag
@@ -36,9 +35,7 @@ IF conntype = 2
  ! endif
  !until flag
  ! todo detect loss of connection
-
 ENDIF
-
 
 IF conntype = 3 | conntype = 4
 BT.OPEN
@@ -73,12 +70,12 @@ ENDIF
 ! ENDIF
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-
 GR.OPEN 255, 0, 0, 0
 GR.ORIENTATION 1 %Force portrait
 GR.SCREEN w, h
 whalf = w/2
 hhalf = h/2
+h20 = h/20
 w20 = w/20
 w40 = w/40
 
@@ -101,16 +98,14 @@ BUNDLE.PUT _,"ay", ay
 
 ARRAY.LOAD ball[], -1, whalf,hhalf+hhalf/2,0,0,w20
 ARRAY.LOAD you[] , -1, whalf,hhalf-hhalf/2,0,0,w20
-
 !real flix
 ARRAY.LOAD flix[],   -1, whalf,hhalf,0,0,w40
-
 !opponents last flix position, not rendered locally
 ARRAY.LOAD yourflix[], -1, whalf,hhalf,0,0,w40
-
 ARRAY.LOAD touch[],-1,0,0
 ARRAY.LOAD touch2[],-1,0,0
-
+! gfxnums of goals
+ARRAY.LOAD goals[],0,0
 ! gfxnums of borders
 ARRAY.LOAD walls[],0,0,0,0
 
@@ -137,7 +132,8 @@ FN.DEF CheckBalls (ball[], flix[], _)
   ball[vx] = ball[vx]+difx/4
   ball[vy] = ball[vy]+dify/4
   !DoSmash(ball[], flix[], _)
-  FN.RTN 80
+  !FN.RTN 80
+  FN.RTN 255
  ELSE
   FN.RTN 255
  ENDIF
@@ -180,7 +176,7 @@ RENDER:
 GR.CLS
 a = 255
 fill = 1
-!r = 255
+r = 255
 g = 255
 b = 255
 GR.COLOR a,r,g,b,fill
@@ -195,6 +191,8 @@ GR.RECT walls[1], 0, 0, w, 10
 GR.RECT walls[2], w-10, 0, w, h
 GR.RECT walls[3], 0,h-10, w, h
 GR.RECT walls[4], 0,0,10,h
+GR.RECT goals[1], whalf-w20, 0, whalf+w20, w40
+GR.RECT goals[2], whalf-w20, h-w40, whalf+w20, h
 
 GR.TOUCH flag, touch[px], touch[py]
 IF flag
@@ -209,11 +207,11 @@ flix[vx] = flix[vx] - flix[vx]/25
 flix[vy] = flix[vy] - flix[vy]/25
 
 GR.TOUCH2 flag2, touch2[px], touch2[py]
-IF flag2
- r = 0
-ELSE
- r = 255
-ENDIF
+!IF flag2
+! r = 0
+!ELSE
+! r = 255
+!ENDIF
 
 UpdatePhysics(ball[], _)
 CheckWalls(ball[], walls[], _)
@@ -223,7 +221,7 @@ CheckWalls(you[], walls[], _)
 
 UpdatePhysics(flix[], _)
 
-g = CheckBalls(ball[], flix[], _)
+CheckBalls(ball[], flix[], _)
 GR.COLOR a,r,g,b,fill
 GR.CIRCLE flix[gn], flix[px], flix[py], flix[rad]
 CheckWalls(flix[], walls[], _)
@@ -268,8 +266,12 @@ ENDIF
 
 flix[px] = (flix[px] + yourflix[px])/2
 flix[py] = (flix[py] + yourflix[py])/2
-flix[vx] = (flix[vx] + yourflix[vx])/2
-flix[vy] = (flix[vy] + yourflix[vy])/2
+if abs(flix[vx]) < abs(yourflix[vx])
+ flix[vx] = yourflix[vx]
+endif
+if abs(flix[vy]) < abs(yourflix[vy])
+ flix[vy] = yourflix[vy]
+endif
 
 GOTO render
 
