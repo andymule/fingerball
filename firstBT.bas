@@ -1,55 +1,76 @@
-!DEBUG.ON
+DEBUG.ON
 !DEBUG.ECHO.ON
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-BT.OPEN
-ARRAY.LOAD type$[], "Connect to host", "Be the host"
-title$ = "Select operation mode"
-SELECT type, type$[], title$
 
-IF type = 1
- BT.CONNECT
+ARRAY.LOAD type$[], "WIFI: Connect to host", "WIFI: Be the host", "BLUETOOTH: Connect to host", "BLUETOOTH: Be the host"
+title$ = "Select operation mode"
+SELECT conntype, type$[], title$
+
+IF conntype=1
+ input "Enter Host IP:", hostip$
+ SOCKET.client.connect hostip$, 12345
+ print "CONNECTED!"
+endif
+
+IF conntype = 2
+ SOCKET.MYIP myip$
+ PRINT "LAN IP: " + myip$
+ !GRABURL mywanip$, "http://icanhazip.com"
+ !print "WAN IP: " + mywanip$
+ SOCKET.SERVER.CREATE 12345
+ PRINT "waiting for connection...."
+ SOCKET.SERVER.CONNECT 0
+ DO
+  SOCKET.SERVER.STATUS st
+ UNTIL st=3
+ SOCKET.SERVER.CLIENT.IP youip$
+ PRINT "CONNECTED! to: " + youip$
+
+ !maxclock = CLOCK() + 10000
+ !do 
+ ! socket.server.read.ready readyflag
+ ! if CLOCK() > maxclock
+ !  print "READ TIME OUT"
+ !  end
+ ! endif
+ !until flag
+ ! todo detect loss of connection
+
 ENDIF
 
-ln = 0
-DO
- BT.STATUS s
- IF s = 1
-  ln = ln + 1
-  PRINT "Listening"; ln; "seconds..."
- ELSEIF s = 2
-  PRINT "Connecting"
- ELSEIF s = 3
-  PRINT "Connected!!!"
- ELSE
-  PRINT s
- ENDIF
- PAUSE 1000
-UNTIL s = 3
-BT.DEVICE.NAME device$
 
-! *** Read/Write Loop ****
-!RW_Loop:
-! IF menu = 2 THEN BT.DISCONNECT
-! Read status to insure
-! that we remain connected.
-! If disconnected, program
-! reverts to listen mode.
-! In that case, ask user
-! what to do.
+IF conntype = 3 | conntype = 4
+ BT.OPEN
+ENDIF
+IF conntype = 3
+ BT.CONNECT
+ENDIF
+IF conntype = 4 | conntype = 3
+ ln = 0
+ DO
+  BT.STATUS s
+  IF s = 1
+   ln = ln + 1
+   PRINT "Listening"; ln; "seconds..."
+  ELSEIF s = 2
+   PRINT "Connecting"
+  ELSEIF s = 3
+   PRINT "Connected!!!"
+  ELSE
+   PRINT s
+  ENDIF
+  PAUSE 1000
+ UNTIL s = 3
+ BT.DEVICE.NAME device$
+ENDIF
+
+!todo make sure still open
 ! BT.STATUS s
 ! IF s<> 3
 !  PRINT "Connection lost"
 !  GOTO new_connection
 ! ENDIF
-! Read messages until
-! the message queue is
-! empty
-
-!onConsoleTouch:
-!xdoMenu = 1
-!ConsoleTouch.Resume
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
@@ -203,19 +224,38 @@ CheckWalls(flix[], walls[], _)
 GR.RENDER
 
 SENDSTR$ = STR$(INT(ball[px]/w*1000)) + " " + STR$(INT(ball[py]/h*1000))
-BT.WRITE SENDSTR$
 
-DO
- BT.READ.READY rr
- IF rr
-  BT.READ.BYTES rmsg$
-  youx = VAL(WORD$(rmsg$, 1))
-  youy = VAL(WORD$(rmsg$, 2))
-  you[px] = youx/1000*h
-  you[py] = youy/1000*h
-  !print rmsg$
- ENDIF
-UNTIL rr = 0
+IF conntype = 1
+ socket.client.write.line sendstr$
+ socket.client.read.ready readyflag
+ while readyflag
+  socket.client.read.line rmsg$
+  GoSub ParseMessage
+  socket.client.read.ready readyflag
+ repeat 
+endif
+
+IF conntype = 2
+ SOCKET.SERVER.WRITE.LINE sendstr$
+ socket.server.read.ready readyflag
+ while readyflag
+  socket.server.read.line rmsg$
+  GoSub ParseMessage
+  socket.server.read.ready readyflag
+ repeat
+ENDIF
+
+IF conntype = 3 | conntype = 4 
+ BT.WRITE SENDSTR$
+ DO
+  BT.READ.READY rr
+  IF rr
+   BT.READ.BYTES rmsg$
+   gosub ParseMessage
+   !print rmsg$
+  ENDIF
+ UNTIL rr = 0
+ENDIF
 
 GOTO render
 
@@ -235,4 +275,11 @@ RETURN
 LoadAccel:
 BUNDLE.GET _,"ax", ax 
 BUNDLE.GET _,"ay", ay
+RETURN
+
+ParseMessage:
+youx = VAL(WORD$(rmsg$, 1))
+youy = VAL(WORD$(rmsg$, 2))
+you[px] = youx/1000*w
+you[py] = youy/1000*h
 RETURN
