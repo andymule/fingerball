@@ -1,7 +1,8 @@
-DEBUG.ON
-DEBUG.ECHO.ON
+!DEBUG.ON
+!DEBUG.ECHO.ON
 
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+!bt.close
 BT.OPEN
 ARRAY.LOAD type$[], "Connect to host", "Be the host"
 title$ = "Select operation mode"
@@ -201,7 +202,7 @@ CheckWalls(flix[], walls[], _)
 
 GR.RENDER
 
-SENDSTR$ = STR$(INT(ball[px])) + " " + STR$(INT(ball[py]))
+SENDSTR$ = STR$(INT(ball[px]/w*1000)) + " " + STR$(INT(ball[py]/h*1000))
 BT.WRITE SENDSTR$
 
 DO
@@ -210,8 +211,8 @@ DO
   BT.READ.BYTES rmsg$
   youx = VAL(WORD$(rmsg$, 1))
   youy = VAL(WORD$(rmsg$, 2))
-  you[px] = youx
-  you[py] = youy
+  you[px] = youx/1000*h
+  you[py] = youy/1000*h
   !print rmsg$
  ENDIF
 UNTIL rr = 0
