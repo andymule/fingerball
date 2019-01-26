@@ -40,14 +40,13 @@ IF conntype = 2
 ENDIF
 
 
-!IF conntype = 3 | conntype = 4
+IF conntype = 3 | conntype = 4
 BT.OPEN
-!ENDIF
-!IF conntype = 3
-IF conntype = 3 | conntype = 1
+ENDIF
+IF conntype = 3
  BT.CONNECT
 ENDIF
-!IF conntype = 4 | conntype = 3
+IF conntype = 4 | conntype = 3
 ln = 0
 DO
  BT.STATUS s
@@ -64,7 +63,7 @@ DO
  PAUSE 1000
 UNTIL s = 3
 BT.DEVICE.NAME device$
-!ENDIF
+ENDIF
 
 !todo make sure still open
 ! BT.STATUS s
@@ -226,8 +225,7 @@ GR.RENDER
 
 SENDSTR$ = STR$(INT(ball[px]/w*1000)) + " " + STR$(INT(ball[py]/h*1000))
 
-!IF conntype = 1
-IF conntype = 1 | conntype = 3
+IF conntype = 1
  SOCKET.CLIENT.WRITE.LINE sendstr$
  SOCKET.CLIENT.READ.READY readyflag
  WHILE readyflag
@@ -237,8 +235,7 @@ IF conntype = 1 | conntype = 3
  REPEAT 
 ENDIF
 
-!IF conntype = 2
-IF conntype = 2 | conntype = 4
+IF conntype = 2
  SOCKET.SERVER.WRITE.LINE sendstr$
  SOCKET.SERVER.READ.READY readyflag
  WHILE readyflag
@@ -248,7 +245,7 @@ IF conntype = 2 | conntype = 4
  REPEAT
 ENDIF
 
-!IF conntype = 3 | conntype = 4 
+IF conntype = 3 | conntype = 4 
 BT.WRITE SENDSTR$
 DO
  BT.READ.READY rr
@@ -258,7 +255,7 @@ DO
   !print rmsg$
  ENDIF
 UNTIL rr = 0
-!ENDIF
+ENDIF
 
 GOTO render
 
