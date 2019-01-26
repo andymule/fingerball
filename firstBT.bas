@@ -2,6 +2,7 @@ DEBUG.ON
 DEBUG.ECHO.ON
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+!bt.close
 BT.OPEN
 ARRAY.LOAD type$[], "Connect to host", "Be the host"
 title$ = "Select operation mode"
