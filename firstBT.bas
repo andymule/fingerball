@@ -232,6 +232,9 @@ GR.RENDER
 
 SENDSTR$ = sNum$(ball[px],w) + " " + sNum$(ball[py],h) + " " + sNum$(flix[px],w) + " " + sNum$(flix[py],h) + " " + sNum$(flix[vx],1) + " " + sNum$(flix[vy],1)
 
+! store current flix if we dont get an update
+Array.copy flix[], yourflix[]
+
 IF conntype = 1
  SOCKET.CLIENT.WRITE.LINE sendstr$
  SOCKET.CLIENT.READ.READY readyflag
@@ -262,6 +265,11 @@ DO
  ENDIF
 UNTIL rr = 0
 ENDIF
+
+flix[px] = (flix[px] + yourflix[px])/2
+flix[py] = (flix[py] + yourflix[py])/2
+flix[vx] = (flix[vx] + yourflix[vx])/2
+flix[vy] = (flix[vy] + yourflix[vy])/2
 
 GOTO render
 
@@ -297,3 +305,4 @@ yourflix[py]=uflixy/2000*h
 yourflix[vx]=uflixvx/2000
 yourflix[vy]=uflixvy/2000
 RETURN
+
