@@ -3,19 +3,11 @@ DEBUG.ECHO.ON
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 BT.OPEN
-ARRAY.LOAD type$[], "Connect to host", "Be the host", "Quit"
+ARRAY.LOAD type$[], "Connect to host", "Be the host"
 title$ = "Select operation mode"
-
-ARRAY.LOAD menu$[], "Send", "Disconnect","Quit"
-
-new_connection:
-xdomenu =0
 SELECT type, type$[], title$
-IF (type = 0) | (type =3)
- PRINT "Thanks for playing"
- BT.CLOSE
- END
-ELSEIF type = 1
+
+IF type = 1
  BT.CONNECT
 ENDIF
 
@@ -24,21 +16,20 @@ DO
  BT.STATUS s
  IF s = 1
   ln = ln + 1
-  PRINT "Listening", ln
+  PRINT "Listening"; ln; "seconds..."
  ELSEIF s = 2
   PRINT "Connecting"
  ELSEIF s = 3
-  PRINT "Connected!"
+  PRINT "Connected!!!"
+ ELSE
+  PRINT s
  ENDIF
  PAUSE 1000
 UNTIL s = 3
 BT.DEVICE.NAME device$
 
 ! *** Read/Write Loop ****
-
-blammo = 0
-RW_Loop:
-
+!RW_Loop:
 ! IF menu = 2 THEN BT.DISCONNECT
 ! Read status to insure
 ! that we remain connected.
@@ -166,6 +157,7 @@ b = 255
 GR.COLOR a,r,g,b,fill
 
 GR.CIRCLE ball[gn], ball[px], ball[py], ball[rad]
+GR.CIRCLE you[gn], you[px], you[py], you[rad]
 
 GR.SET.STROKE 20
 
@@ -196,6 +188,10 @@ ENDIF
 
 UpdatePhysics(ball[], _)
 CheckWalls(ball[], walls[], _)
+
+UpdatePhysics(you[], _)
+CheckWalls(you[], walls[], _)
+
 UpdatePhysics(flix[], _)
 
 g = CheckBalls(ball[], flix[], _)
@@ -205,13 +201,18 @@ CheckWalls(flix[], walls[], _)
 
 GR.RENDER
 
-SENDSTR$ = STR$(ball[px]) + "," + STR$(ball[py])
+SENDSTR$ = STR$(INT(ball[px])) + " " + STR$(INT(ball[py]))
 BT.WRITE SENDSTR$
+
 DO
  BT.READ.READY rr
  IF rr
   BT.READ.BYTES rmsg$
-  
+  youx = VAL(WORD$(rmsg$, 1))
+  youy = VAL(WORD$(rmsg$, 2))
+  you[px] = youx
+  you[py] = youy
+  !print rmsg$
  ENDIF
 UNTIL rr = 0
 
