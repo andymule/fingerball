@@ -8,10 +8,10 @@ title$ = "Select operation mode"
 SELECT conntype, type$[], title$
 
 IF conntype=1
- input "Enter Host IP:", hostip$
- SOCKET.client.connect hostip$, 12345
- print "CONNECTED!"
-endif
+ INPUT "Enter Host IP:", hostip$
+ SOCKET.CLIENT.CONNECT hostip$, 12345
+ PRINT "CONNECTED!"
+ENDIF
 
 IF conntype = 2
  SOCKET.MYIP myip$
@@ -40,30 +40,31 @@ IF conntype = 2
 ENDIF
 
 
-IF conntype = 3 | conntype = 4
- BT.OPEN
-ENDIF
-IF conntype = 3
+!IF conntype = 3 | conntype = 4
+BT.OPEN
+!ENDIF
+!IF conntype = 3
+IF conntype = 3 | conntype = 1
  BT.CONNECT
 ENDIF
-IF conntype = 4 | conntype = 3
- ln = 0
- DO
-  BT.STATUS s
-  IF s = 1
-   ln = ln + 1
-   PRINT "Listening"; ln; "seconds..."
-  ELSEIF s = 2
-   PRINT "Connecting"
-  ELSEIF s = 3
-   PRINT "Connected!!!"
-  ELSE
-   PRINT s
-  ENDIF
-  PAUSE 1000
- UNTIL s = 3
- BT.DEVICE.NAME device$
-ENDIF
+!IF conntype = 4 | conntype = 3
+ln = 0
+DO
+ BT.STATUS s
+ IF s = 1
+  ln = ln + 1
+  PRINT "Listening"; ln; "seconds..."
+ ELSEIF s = 2
+  PRINT "Connecting"
+ ELSEIF s = 3
+  PRINT "Connected!!!"
+ ELSE
+  PRINT s
+ ENDIF
+ PAUSE 1000
+UNTIL s = 3
+BT.DEVICE.NAME device$
+!ENDIF
 
 !todo make sure still open
 ! BT.STATUS s
@@ -225,37 +226,39 @@ GR.RENDER
 
 SENDSTR$ = STR$(INT(ball[px]/w*1000)) + " " + STR$(INT(ball[py]/h*1000))
 
-IF conntype = 1
- socket.client.write.line sendstr$
- socket.client.read.ready readyflag
- while readyflag
-  socket.client.read.line rmsg$
-  GoSub ParseMessage
-  socket.client.read.ready readyflag
- repeat 
-endif
+!IF conntype = 1
+IF conntype = 1 | conntype = 3
+ SOCKET.CLIENT.WRITE.LINE sendstr$
+ SOCKET.CLIENT.READ.READY readyflag
+ WHILE readyflag
+  SOCKET.CLIENT.READ.LINE rmsg$
+  GOSUB ParseMessage
+  SOCKET.CLIENT.READ.READY readyflag
+ REPEAT 
+ENDIF
 
-IF conntype = 2
+!IF conntype = 2
+IF conntype = 2 | conntype = 4
  SOCKET.SERVER.WRITE.LINE sendstr$
- socket.server.read.ready readyflag
- while readyflag
-  socket.server.read.line rmsg$
-  GoSub ParseMessage
-  socket.server.read.ready readyflag
- repeat
+ SOCKET.SERVER.READ.READY readyflag
+ WHILE readyflag
+  SOCKET.SERVER.READ.LINE rmsg$
+  GOSUB ParseMessage
+  SOCKET.SERVER.READ.READY readyflag
+ REPEAT
 ENDIF
 
-IF conntype = 3 | conntype = 4 
- BT.WRITE SENDSTR$
- DO
-  BT.READ.READY rr
-  IF rr
-   BT.READ.BYTES rmsg$
-   gosub ParseMessage
-   !print rmsg$
-  ENDIF
- UNTIL rr = 0
-ENDIF
+!IF conntype = 3 | conntype = 4 
+BT.WRITE SENDSTR$
+DO
+ BT.READ.READY rr
+ IF rr
+  BT.READ.BYTES rmsg$
+  GOSUB ParseMessage
+  !print rmsg$
+ ENDIF
+UNTIL rr = 0
+!ENDIF
 
 GOTO render
 
