@@ -1,5 +1,5 @@
 DEBUG.ON
-!DEBUG.ECHO.ON
+DEBUG.ECHO.ON
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -102,7 +102,11 @@ BUNDLE.PUT _,"ay", ay
 ARRAY.LOAD ball[], -1, whalf,hhalf+hhalf/2,0,0,w20
 ARRAY.LOAD you[] , -1, whalf,hhalf-hhalf/2,0,0,w20
 
-ARRAY.LOAD flix[], -1, whalf,hhalf,        0,0,w40
+!real flix
+ARRAY.LOAD flix[],   -1, whalf,hhalf,0,0,w40
+
+!opponents last flix position, not rendered locally
+ARRAY.LOAD yourflix[], -1, whalf,hhalf,0,0,w40
 
 ARRAY.LOAD touch[],-1,0,0
 ARRAY.LOAD touch2[],-1,0,0
@@ -168,6 +172,9 @@ FN.DEF CheckWalls (ball[], walls[], _)
  NEXT x
 FN.END
 
+fn.def sNum$(num, scale)
+ fn.rtn STR$(INT(num/scale*2000))
+fn.end
 
 RENDER:
 GR.CLS
@@ -223,7 +230,7 @@ CheckWalls(flix[], walls[], _)
 
 GR.RENDER
 
-SENDSTR$ = STR$(INT(ball[px]/w*1000)) + " " + STR$(INT(ball[py]/h*1000))
+SENDSTR$ = sNum$(ball[px],w) + " " + sNum$(ball[py],h) + " " + sNum$(flix[px],w) + " " + sNum$(flix[py],h) + " " + sNum$(flix[vx],1) + " " + sNum$(flix[vy],1)
 
 IF conntype = 1
  SOCKET.CLIENT.WRITE.LINE sendstr$
@@ -252,7 +259,6 @@ DO
  IF rr
   BT.READ.BYTES rmsg$
   GOSUB ParseMessage
-  !print rmsg$
  ENDIF
 UNTIL rr = 0
 ENDIF
@@ -278,8 +284,16 @@ BUNDLE.GET _,"ay", ay
 RETURN
 
 ParseMessage:
-youx = VAL(WORD$(rmsg$, 1))
-youy = VAL(WORD$(rmsg$, 2))
-you[px] = youx/1000*w
-you[py] = youy/1000*h
+youx    = VAL(WORD$(rmsg$, 1))
+youy    = VAL(WORD$(rmsg$, 2))
+uflixx  = VAL(WORD$(rmsg$, 3))
+uflixy  = VAL(WORD$(rmsg$, 4))
+uflixvx = VAL(WORD$(rmsg$, 5))
+uflixvy = VAL(WORD$(rmsg$, 6))
+you[px] = youx/2000*w
+you[py] = youy/2000*h
+yourflix[px]=uflixx/2000*w
+yourflix[py]=uflixy/2000*h
+yourflix[vx]=uflixvx/2000
+yourflix[vy]=uflixvy/2000
 RETURN
