@@ -205,12 +205,15 @@ BUNDLE.GET _,"ax", ax
 BUNDLE.GET _,"ay", ay
 RETURN
 
-CheckTouch:
+CheckTouch: %TODO circular speed limit
 GR.TOUCH flag, touch[px], touch[py]
 IF flag
  !TODO better controls
  ball[vx] = diff(touch[], ball[],"px", _)
  ball[vy] = diff(touch[], ball[],"py", _)
+ !totalv = ball[vx]+ball[vy]
+ !xpercent = ball[vx]/totalv
+ !ypercent = ball[vy]/totalv
  if abs(ball[vx]) > ballspeedlimit
    ball[vx] = SGN(ball[vx])*ballspeedlimit
  endif
