@@ -76,7 +76,7 @@ GR.OPEN 255, 0, 0, 0,0,1
 GR.SCREEN w, h
 whalf = w/2
 hhalf = h/2
-h20 = h/20
+h20 = h/20 
 w20 = w/20
 w40 = w/40
 dataRes = 2000
