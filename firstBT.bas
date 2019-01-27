@@ -79,7 +79,7 @@ hhalf = h/2
 h20 = h/20 
 w20 = w/20
 w40 = w/40
-dataRes = 2000
+dataRes = 2000 %also in function needz changed twice lol
 
 gn = 1
 px = 2
@@ -188,6 +188,7 @@ FN.DEF CheckWalls (ball[], walls[], _)
 FN.END
 
 fn.def sNum$(num, scale)
+ dataRes=2000
  fn.rtn STR$(INT(num/scale*dataRes))
 fn.end
 
