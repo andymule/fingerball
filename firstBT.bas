@@ -248,53 +248,15 @@ CheckWalls(flix[], walls[], _)
 GR.RENDER
 
 SENDSTR$ = sNum$(ball[px],w) + " " + sNum$(ball[py],h)~
-+ " " + sNum$(ball[vx],w) + " " + sNum$(ball[vy],h)~
++ " " + sNum$(ball[vx],1) + " " + sNum$(ball[vy],1)~
 + " " + sNum$(flix[px],w) + " " + sNum$(flix[py],h)~
 + " " + sNum$(flix[vx],1) + " " + sNum$(flix[vy],1)
 
 ! store current flix if we dont get an update
 Array.copy flix[], yourflix[]
-
-IF conntype = 1
- SOCKET.CLIENT.WRITE.LINE sendstr$
- SOCKET.CLIENT.READ.READY readyflag
- WHILE readyflag
-  SOCKET.CLIENT.READ.LINE rmsg$
-  GOSUB ParseMessage
-  SOCKET.CLIENT.READ.READY readyflag
- REPEAT 
-ENDIF
-
-IF conntype = 2
- SOCKET.SERVER.WRITE.LINE sendstr$
- SOCKET.SERVER.READ.READY readyflag
- WHILE readyflag
-  SOCKET.SERVER.READ.LINE rmsg$
-  GOSUB ParseMessage
-  SOCKET.SERVER.READ.READY readyflag
- REPEAT
-ENDIF
-
-IF conntype = 3 | conntype = 4 
-BT.WRITE SENDSTR$
-DO
- BT.READ.READY rr
- IF rr
-  BT.READ.BYTES rmsg$
-  GOSUB ParseMessage
- ENDIF
-UNTIL rr = 0
-ENDIF
-
-flix[px] = (flix[px] + yourflix[px])/2
-flix[py] = (flix[py] + yourflix[py])/2
-if abs(flix[vx]) < abs(yourflix[vx])
- flix[vx] = yourflix[vx]
-endif
-if abs(flix[vy]) < abs(yourflix[vy])
- flix[vy] = yourflix[vy]
-endif
-
+GoSub HandleTCP
+GoSub HandleBluetooth
+GoSub SmoothFlix
 GOTO render
 
 ONERROR:
@@ -326,8 +288,8 @@ uflixvx = VAL(WORD$(rmsg$, 7))
 uflixvy = VAL(WORD$(rmsg$, 8))
 you[px] = youx/dataRes*w
 you[py] = youy/dataRes*h
-you[vx] = youvx/dataRes*h
-you[vy] = youvy/dataRes*h
+!you[vx] = youvx/dataRes
+!you[vy] = youvy/dataRes
 yourflix[px]=uflixx/dataRes*w
 yourflix[py]=uflixy/dataRes*h
 yourflix[vx]=uflixvx/dataRes
@@ -341,5 +303,50 @@ LerpYou:
  uOldx1=you[px]
  uOldy2=uOldy1
  uOldy1=you[py]
+return
+
+HandleTCP:
+IF conntype = 1
+ SOCKET.CLIENT.WRITE.LINE sendstr$
+ SOCKET.CLIENT.READ.READY readyflag
+ WHILE readyflag
+  SOCKET.CLIENT.READ.LINE rmsg$
+  GOSUB ParseMessage
+  SOCKET.CLIENT.READ.READY readyflag
+ REPEAT 
+ENDIF
+IF conntype = 2
+ SOCKET.SERVER.WRITE.LINE sendstr$
+ SOCKET.SERVER.READ.READY readyflag
+ WHILE readyflag
+  SOCKET.SERVER.READ.LINE rmsg$
+  GOSUB ParseMessage
+  SOCKET.SERVER.READ.READY readyflag
+ REPEAT
+ENDIF
+return
+
+HandleBluetooth:
+IF conntype = 3 | conntype = 4 
+BT.WRITE SENDSTR$
+DO
+ BT.READ.READY rr
+ IF rr
+  BT.READ.BYTES rmsg$
+  GOSUB ParseMessage
+ ENDIF
+UNTIL rr = 0
+ENDIF
+return
+
+SmoothFlix:
+flix[px] = (flix[px] + yourflix[px])/2
+flix[py] = (flix[py] + yourflix[py])/2
+if abs(flix[vx]) < abs(yourflix[vx])
+ flix[vx] = yourflix[vx]
+endif
+if abs(flix[vy]) < abs(yourflix[vy])
+ flix[vy] = yourflix[vy]
+endif
 return
 
