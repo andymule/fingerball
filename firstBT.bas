@@ -4,22 +4,16 @@ DEBUG.ECHO.ON  % only actually enabled if debug.on
 !TODO flip game so current user is always on bottom of screen
 
 !XXXXXXXXXXXX START FUNCTION DEFS XXXXXXXXXXXXXXX
-FN.DEF diff (x[],y[], k$, _)
- BUNDLE.GET _,k$, key%
- FN.RTN x[key] - y[key]
-FN.END
-
-FN.DEF UpdatePhysics (b[], _)
- GOSUB LoadKeys
- GOSUB LoadAccel
+FN.DEF UpdatePhysics (b[])
+ GOSUB MakeKeys
  b[vx] = b[vx]+b[vx]*b[ax]
  b[vy] = b[vy]+b[vy]*b[ay]
  b[px] = b[px] + b[vx]
  b[py] = b[py] + b[vy]
 FN.END
 
-FN.DEF CheckBalls (b1[], b2[], _)
- GOSUB LoadKeys
+FN.DEF CheckBalls (b1[], b2[])
+ GOSUB MakeKeys
  difx = b1[px]-b2[px]
  dify = b1[py]-b2[py]
  dist = POW(difx,2)+POW(dify,2)
@@ -35,8 +29,8 @@ FN.DEF CheckBalls (b1[], b2[], _)
  ENDIF
 FN.END
 
-FN.DEF CheckWalls (ball[], walls[], _)
- GOSUB LoadKeys
+FN.DEF CheckWalls (ball[], walls[])
+ GOSUB MakeKeys
  ARRAY.LENGTH w, walls[]
  FOR x=1 TO w
   IF GR_COLLISION(ball[gn], walls[x])
@@ -133,14 +127,14 @@ GR.RECT goals[2], whalf-w20, h-w40, whalf+w20, h
 
 GOSUB CheckTouch
 
-UpdatePhysics(ball[], _)
-CheckWalls(ball[], walls[], _)
-UpdatePhysics(you[], _)
-CheckWalls(you[], walls[], _)
-CheckBalls(ball[], you[], _)
-UpdatePhysics(flix[], _)
-CheckBalls(ball[], flix[], _)
-CheckWalls(flix[], walls[], _)
+UpdatePhysics(ball[])
+CheckWalls(ball[], walls[])
+UpdatePhysics(you[])
+CheckWalls(you[], walls[])
+CheckBalls(ball[], you[])
+UpdatePhysics(flix[])
+CheckBalls(ball[], flix[])
+CheckWalls(flix[], walls[])
 
 IF GR_COLLISION(flix[gn], goals[1])
  bscore += 1
@@ -181,36 +175,14 @@ vy = 5
 rad= 6
 ax = 7
 ay = 8
-BUNDLE.PUT _,"gn", gn
-BUNDLE.PUT _,"px", px
-BUNDLE.PUT _,"py", py
-BUNDLE.PUT _,"vx", vx
-BUNDLE.PUT _,"vy", vy
-BUNDLE.PUT _,"rad", rad
-BUNDLE.PUT _,"ax", ax
-BUNDLE.PUT _,"ay", ay
-RETURN
-
-LoadKeys:
-BUNDLE.GET _,"gn", gn
-BUNDLE.GET _,"px", px
-BUNDLE.GET _,"py", py
-BUNDLE.GET _,"vx", vx
-BUNDLE.GET _,"vy", vy
-BUNDLE.GET _,"rad", rad
-RETURN
-
-LoadAccel: %less used than others
-BUNDLE.GET _,"ax", ax 
-BUNDLE.GET _,"ay", ay
-RETURN
+return
 
 CheckTouch: %TODO circular speed limit
 GR.TOUCH flag, touch[px], touch[py]
 IF flag
  !TODO better controls
- ball[vx] = diff(touch[], ball[],"px", _)
- ball[vy] = diff(touch[], ball[],"py", _)
+ ball[vx] = touch[px]-ball[px]
+ ball[vy] = touch[py]-ball[py]
  !totalv = ball[vx]+ball[vy]
  !xpercent = ball[vx]/totalv
  !ypercent = ball[vy]/totalv
