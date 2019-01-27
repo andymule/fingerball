@@ -79,6 +79,7 @@ hhalf = h/2
 h20 = h/20
 w20 = w/20
 w40 = w/40
+dataRes = 2000
 
 gn = 1
 px = 2
@@ -187,7 +188,7 @@ FN.DEF CheckWalls (ball[], walls[], _)
 FN.END
 
 fn.def sNum$(num, scale)
- fn.rtn STR$(INT(num/scale*2000))
+ fn.rtn STR$(INT(num/scale*dataRes))
 fn.end
 
 RENDER:
@@ -246,7 +247,10 @@ CheckWalls(flix[], walls[], _)
 
 GR.RENDER
 
-SENDSTR$ = sNum$(ball[px],w) + " " + sNum$(ball[py],h) + " " + sNum$(flix[px],w) + " " + sNum$(flix[py],h) + " " + sNum$(flix[vx],1) + " " + sNum$(flix[vy],1)
+SENDSTR$ = sNum$(ball[px],w) + " " + sNum$(ball[py],h)~
++ " " + sNum$(ball[vx],w) + " " + sNum$(ball[vy],h)~
++ " " + sNum$(flix[px],w) + " " + sNum$(flix[py],h)~
++ " " + sNum$(flix[vx],1) + " " + sNum$(flix[vy],1)
 
 ! store current flix if we dont get an update
 Array.copy flix[], yourflix[]
@@ -314,16 +318,20 @@ RETURN
 ParseMessage:
 youx    = VAL(WORD$(rmsg$, 1))
 youy    = VAL(WORD$(rmsg$, 2))
-uflixx  = VAL(WORD$(rmsg$, 3))
-uflixy  = VAL(WORD$(rmsg$, 4))
-uflixvx = VAL(WORD$(rmsg$, 5))
-uflixvy = VAL(WORD$(rmsg$, 6))
-you[px] = youx/2000*w
-you[py] = youy/2000*h
-yourflix[px]=uflixx/2000*w
-yourflix[py]=uflixy/2000*h
-yourflix[vx]=uflixvx/2000
-yourflix[vy]=uflixvy/2000
+youvx   = VAL(WORD$(rmsg$, 3))
+youvy   = VAL(WORD$(rmsg$, 4))
+uflixx  = VAL(WORD$(rmsg$, 5))
+uflixy  = VAL(WORD$(rmsg$, 6))
+uflixvx = VAL(WORD$(rmsg$, 7))
+uflixvy = VAL(WORD$(rmsg$, 8))
+you[px] = youx/dataRes*w
+you[py] = youy/dataRes*h
+you[vx] = youvx/dataRes*h
+you[vy] = youvy/dataRes*h
+yourflix[px]=uflixx/dataRes*w
+yourflix[py]=uflixy/dataRes*h
+yourflix[vx]=uflixvx/dataRes
+yourflix[vy]=uflixvy/dataRes
 RETURN
 
 LerpYou:
