@@ -2,9 +2,10 @@
 !DEBUG.ECHO.ON
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-ARRAY.LOAD type$[], "WIFI: Connect to host", "WIFI: Be the host", "BLUETOOTH: Connect to host", "BLUETOOTH: Be the host"
-title$ = "Select operation mode"
+array.load vib[],1,10
+vibrate vib[], -1
+ARRAY.LOAD type$[], "WIFI: Connect to host", "WIFI: Be the host", "BLUETOOTH (slow/laggy): Connect to host", "BLUETOOTH (slow/laggy): Be the host", "Free Play"
+title$ = "Select mode"
 SELECT conntype, type$[], title$
 
 IF conntype=1
@@ -49,7 +50,7 @@ DO
  BT.STATUS s
  IF s = 1
   ln = ln + 1
-  PRINT "Listening"; ln; "seconds..."
+  PRINT "Listening "; int(ln); " seconds..."
  ELSEIF s = 2
   PRINT "Connecting"
  ELSEIF s = 3
@@ -70,8 +71,8 @@ ENDIF
 ! ENDIF
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-GR.OPEN 255, 0, 0, 0
-GR.ORIENTATION 1 %Force portrait
+GR.OPEN 255, 0, 0, 0,0,1
+!GR.ORIENTATION 1 %Force portrait
 GR.SCREEN w, h
 whalf = w/2
 hhalf = h/2
@@ -96,8 +97,21 @@ BUNDLE.PUT _,"rad", rad
 BUNDLE.PUT _,"ax", ax
 BUNDLE.PUT _,"ay", ay
 
-ARRAY.LOAD ball[], -1, whalf,hhalf+hhalf/2,0,0,w20
-ARRAY.LOAD you[] , -1, whalf,hhalf-hhalf/2,0,0,w20
+mystart = hhalf+hhalf/2
+ustart = hhalf-hhalf/2
+if conntype %2
+mystart = hhalf-hhalf/2
+ustart = hhalf+hhalf/2
+endif
+ARRAY.LOAD ball[], -1, whalf,mystart,0,0,w20
+ARRAY.LOAD you[] , -1, whalf,ustart,0,0,w20
+
+!lerp/smooth previous positions w these
+uOldx1 = whalf
+uOldx2 = whalf
+uOldy1 = ustart
+uOldy2 = ustart
+
 !real flix
 ARRAY.LOAD flix[],   -1, whalf,hhalf,0,0,w40
 !opponents last flix position, not rendered locally
@@ -127,6 +141,8 @@ FN.DEF CheckBalls (ball[], flix[], _)
  dist = POW(difx,2)+POW(dify,2)
  dist = SQR(dist)
  IF dist < ball[rad]+flix[rad]
+  array.load vib[],1,3
+  vibrate vib[], -1
   flix[vx] = flix[vx]-difx/5
   flix[vy] = flix[vy]-dify/5
   ball[vx] = ball[vx]+difx/4
@@ -150,6 +166,8 @@ FN.DEF CheckWalls (ball[], walls[], _)
  ARRAY.LENGTH w, walls[]
  FOR x=1 TO w
   IF GR_COLLISION(ball[gn], walls[x])
+   array.load vib[],1,3
+   vibrate vib[], -1
    SW.BEGIN x
     SW.CASE 1
      ball[vy] = ABS(ball[vy])
@@ -307,4 +325,13 @@ yourflix[py]=uflixy/2000*h
 yourflix[vx]=uflixvx/2000
 yourflix[vy]=uflixvy/2000
 RETURN
+
+LerpYou:
+ you[px] = (you[px]+uOldx1+uOldx2)/3
+ you[py] = (you[py]+uOldy1+uOldy2)/3
+ uOldx2=uOldx1
+ uOldx1=you[px]
+ uOldy2=uOldy1
+ uOldy1=you[py]
+return
 
