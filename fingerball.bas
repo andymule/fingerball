@@ -5,7 +5,7 @@ DEBUG.ECHO.ON  % only actually enabled if debug.on
 
 !XXXXXXXXXXXX START FUNCTION DEFS XXXXXXXXXXXXXXX
 FN.DEF UpdatePhysics (b[])
- GOSUB MakeKeys
+ GOSUB MakeKeys %makes keys to treat arrays like a class
  b[vx] = b[vx]+b[vx]*b[ax]
  b[vy] = b[vy]+b[vy]*b[ay]
  b[px] = b[px] + b[vx]
@@ -85,7 +85,7 @@ GOSUB MakeKeys %makes keys to treat arrays like a class
 
 mystart = hhalf+hhalf/2
 ustart = hhalf-hhalf/2
-IF conntype %2
+IF mod(conntype,2)=0
  mystart = hhalf-hhalf/2
  ustart = hhalf+hhalf/2
 ENDIF
@@ -135,18 +135,11 @@ CheckBalls(ball[], you[])
 UpdatePhysics(flix[])
 CheckBalls(ball[], flix[])
 CheckWalls(flix[], walls[])
+CheckBalls(flix[], you[])
 
-IF GR_COLLISION(flix[gn], goals[1])
- bscore += 1
- GOSUB ResetFlix
-ENDIF
-IF GR_COLLISION(flix[gn], goals[2])
- tscore += 1
- GOSUB ResetFlix
-ENDIF
 GR.COLOR 25,255,255,255,1
-tstr$=Format$("%",tscore)
-bstr$=Format$("%",bscore)
+tstr$=FORMAT$("%",tscore)
+bstr$=FORMAT$("%",bscore)
 GR.GET.TEXTBOUNDS tstr$,tl,tt,tr,tb
 GR.GET.TEXTBOUNDS bstr$,bl,bt,br,bb
 GR.TEXT.DRAW ttext[gn],ttext[px]-tl/2,ttext[py],tstr$
@@ -158,12 +151,25 @@ SENDSTR$ = sNum$(ball[px],w) + " " + sNum$(ball[py],h)~
 + " " + sNum$(ball[vx],1) + " " + sNum$(ball[vy],1)~
 + " " + sNum$(flix[px],w) + " " + sNum$(flix[py],h)~
 + " " + sNum$(flix[vx],1) + " " + sNum$(flix[vy],1)~
-+ " " + str$(tscore) + " " + str$(bscore)
++ " " + STR$(tscore) + " " + STR$(bscore)
 ! store current flix in case we dont get an update
 ARRAY.COPY flix[], yourflix[]
 GOSUB HandleTCP
 GOSUB HandleBluetooth
 GOSUB SmoothFlix
+
+! did someone score? only server or freeplay checks
+IF mod(conntype, 2) = 0 | conntype=5
+ IF GR_COLLISION(flix[gn], goals[1])
+  bscore += 1
+  GOSUB ResetFlix
+ ENDIF
+ IF GR_COLLISION(flix[gn], goals[2])
+  tscore += 1
+  GOSUB ResetFlix
+ ENDIF
+ENDIF
+
 GOTO render
 !XXXXXXXXXXXXXXX END MAIN LOOP XXXXXXXXXXXXXXXX
 
@@ -176,7 +182,7 @@ vy = 5
 rad= 6
 ax = 7
 ay = 8
-return
+RETURN
 
 CheckTouch: %TODO circular speed limit
 GR.TOUCH flag, touch[px], touch[py]
@@ -184,23 +190,23 @@ IF flag
  !TODO better controls, powerup shot
  ball[vx] = touch[px]-ball[px]
  ball[vy] = touch[py]-ball[py]
- totalv = abs(ball[vx])+abs(ball[vy])+0.00001
- xpercent = abs(ball[vx]/totalv)
- ypercent = abs(ball[vy]/totalv)
- if totalv > ballspeedlimit
-   ball[vx] = SGN(ball[vx])*ballspeedlimit*xpercent
-   ball[vy] = SGN(ball[vy])*ballspeedlimit*ypercent
- endif
+ totalv = ABS(ball[vx])+ABS(ball[vy])+0.00001
+ xpercent = ABS(ball[vx]/totalv)
+ ypercent = ABS(ball[vy]/totalv)
+ IF totalv > ballspeedlimit
+  ball[vx] = SGN(ball[vx])*ballspeedlimit*xpercent
+  ball[vy] = SGN(ball[vy])*ballspeedlimit*ypercent
+ ENDIF
 ENDIF
 !GR.TOUCH2 flag2, touch2[px], touch2[py]
 RETURN
 
 ResetFlix:
- flix[px]=whalf
- flix[py]=hhalf
- flix[vx]=0
- flix[vy]=0
- ARRAY.COPY flix[], yourflix[]
+flix[px]=whalf
+flix[py]=hhalf
+flix[vx]=0
+flix[vy]=0
+ARRAY.COPY flix[], yourflix[]
 RETURN 
 
 ParseMessage: %restore and load network msg data
@@ -222,14 +228,14 @@ yourflix[px]=uflixx/dataRes*w
 yourflix[py]=uflixy/dataRes*h
 yourflix[vx]=uflixvx/dataRes
 yourflix[vy]=uflixvy/dataRes
-if utscore > tscore
+IF utscore > tscore
  tscore = utscore
- gosub ResetFlix
-endif
-if ubscore > bscore
+ GOSUB ResetFlix
+ENDIF
+IF ubscore > bscore
  bscore = ubscore
- gosub ResetFlix
-endif
+ GOSUB ResetFlix
+ENDIF
 RETURN
 
 SmoothFlix: %interps both players flix data
