@@ -167,16 +167,15 @@ GOSUB SmoothFlix
 GOTO render
 !XXXXXXXXXXXXXXX END MAIN LOOP XXXXXXXXXXXXXXXX
 
-!use these standard keys to treat [] like class
-MakeKeys: 
-gn = 1 %graphics handle, can pass to GR commands
-px = 2 %position x
-py = 3 %position y
-vx = 4 %velocity x
-vy = 5 %velocity y
-rad= 6 %radius
-ax = 7 %acceleration x
-ay = 8 %acceleration y
+MakeKeys:
+gn = 1
+px = 2
+py = 3
+vx = 4
+vy = 5
+rad= 6
+ax = 7
+ay = 8
 return
 
 CheckTouch: %TODO circular speed limit
@@ -201,6 +200,7 @@ ResetFlix:
  flix[py]=hhalf
  flix[vx]=0
  flix[vy]=0
+ ARRAY.COPY flix[], yourflix[]
 RETURN 
 
 ParseMessage: %restore and load network msg data
