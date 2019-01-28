@@ -63,6 +63,8 @@ GOSUB StartWifi
 GOSUB StartBluetooth
 IF MOD(conntype, 2) = 0 | conntype=5
  IsServer = 1
+ELSE
+ IsClient = 1
 ENDIF
 !XXXXXXXXXXXXXXXX Start Game Engine XXXXXXXXXXXXXXXXXX
 GR.OPEN 255, 0, 0, 0,0,1
@@ -73,12 +75,13 @@ h20 = h/20
 w20 = w/20
 w40 = w/40
 
+!XXXXXXXXXXXXXXXX GAME TWEAK VARS XXXXXXXXXXXXXXXZ
+ballfrict = -0.03
+flixfrict = -0.025
+ballspeedlimit = h/120
 dataRes = 2000 %also in function needz changed twice lol
 bscore = INT(0)
 tscore = INT(0)
-ballfrict = -0.03
-flixfrict = -0.025
-ballspeedlimit = 20
 
 GOSUB MakeKeys %makes keys to treat arrays like a class
 
@@ -94,9 +97,6 @@ ARRAY.LOAD you[] , -1, whalf,ustart,0,0,~
 w20,ballfrict, ballfrict
 ARRAY.LOAD flix[],   -1, whalf,hhalf,0,0,~
 w40,flixfrict, flixfrict
-!opponents last flix position, not rendered locally
-ARRAY.LOAD yourflix[],-1,whalf,hhalf,0,0,~
-w40,flixfrict,flixfrict
 ARRAY.LOAD touch[],-1,0,0
 ARRAY.LOAD touch2[],-1,0,0
 ! gfxnums of goals
@@ -225,17 +225,17 @@ you[py] = youy/dataRes*h
 you[vx] = youvx/dataRes
 you[vy] = youvy/dataRes
 
-IF IsServer <> 1
+IF IsClient
  uflixx  = VAL(WORD$(rmsg$, 5))
  uflixy  = VAL(WORD$(rmsg$, 6))
  uflixvx = VAL(WORD$(rmsg$, 7))
  uflixvy = VAL(WORD$(rmsg$, 8))
  utscore = VAL(WORD$(rmsg$, 9))
  ubscore = VAL(WORD$(rmsg$, 10))
- yourflix[px]=uflixx/dataRes*w
- yourflix[py]=uflixy/dataRes*h
- yourflix[vx]=uflixvx/dataRes
- yourflix[vy]=uflixvy/dataRes
+ flix[px]=uflixx/dataRes*w
+ flix[py]=uflixy/dataRes*h
+ flix[vx]=uflixvx/dataRes
+ flix[vy]=uflixvy/dataRes
  IF utscore > tscore
   tscore = utscore
   GOSUB ResetFlix
