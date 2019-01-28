@@ -157,7 +157,8 @@ GR.RENDER
 SENDSTR$ = sNum$(ball[px],w) + " " + sNum$(ball[py],h)~
 + " " + sNum$(ball[vx],1) + " " + sNum$(ball[vy],1)~
 + " " + sNum$(flix[px],w) + " " + sNum$(flix[py],h)~
-+ " " + sNum$(flix[vx],1) + " " + sNum$(flix[vy],1)
++ " " + sNum$(flix[vx],1) + " " + sNum$(flix[vy],1)~
++ " " + str$(tscore) + " " + str$(bscore)
 ! store current flix in case we dont get an update
 ARRAY.COPY flix[], yourflix[]
 GOSUB HandleTCP
@@ -180,17 +181,15 @@ return
 CheckTouch: %TODO circular speed limit
 GR.TOUCH flag, touch[px], touch[py]
 IF flag
- !TODO better controls
+ !TODO better controls, powerup shot
  ball[vx] = touch[px]-ball[px]
  ball[vy] = touch[py]-ball[py]
- !totalv = ball[vx]+ball[vy]
- !xpercent = ball[vx]/totalv
- !ypercent = ball[vy]/totalv
- if abs(ball[vx]) > ballspeedlimit
-   ball[vx] = SGN(ball[vx])*ballspeedlimit
- endif
- if abs(ball[vy]) > ballspeedlimit
-   ball[vy] = SGN(ball[vy])*ballspeedlimit
+ totalv = abs(ball[vx])+abs(ball[vy])+0.00001
+ xpercent = abs(ball[vx]/totalv)
+ ypercent = abs(ball[vy]/totalv)
+ if totalv > ballspeedlimit
+   ball[vx] = SGN(ball[vx])*ballspeedlimit*xpercent
+   ball[vy] = SGN(ball[vy])*ballspeedlimit*ypercent
  endif
 ENDIF
 !GR.TOUCH2 flag2, touch2[px], touch2[py]
@@ -212,6 +211,8 @@ uflixx  = VAL(WORD$(rmsg$, 5))
 uflixy  = VAL(WORD$(rmsg$, 6))
 uflixvx = VAL(WORD$(rmsg$, 7))
 uflixvy = VAL(WORD$(rmsg$, 8))
+utscore = VAL(WORD$(rmsg$, 9))
+ubscore = VAL(WORD$(rmsg$, 10))
 you[px] = youx/dataRes*w
 you[py] = youy/dataRes*h
 you[vx] = youvx/dataRes
@@ -220,6 +221,14 @@ yourflix[px]=uflixx/dataRes*w
 yourflix[py]=uflixy/dataRes*h
 yourflix[vx]=uflixvx/dataRes
 yourflix[vy]=uflixvy/dataRes
+if utscore > tscore
+ tscore = utscore
+ gosub ResetFlix
+endif
+if ubscore > bscore
+ bscore = ubscore
+ gosub ResetFlix
+endif
 RETURN
 
 SmoothFlix: %interps both players flix data
