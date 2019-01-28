@@ -1,8 +1,6 @@
 !DEBUG.ON      % enables all debug calls
 DEBUG.ECHO.ON  % only actually enabled if debug.on
-
 !TODO flip game so current user is always on bottom of screen
-
 !XXXXXXXXXXXX START FUNCTION DEFS XXXXXXXXXXXXXXX
 FN.DEF UpdatePhysics (b[])
  GOSUB MakeKeys %makes keys to treat arrays like a class
@@ -25,7 +23,6 @@ FN.DEF CheckBalls (b1[], b2[])
   b2[vy] = b2[vy]-dify/5
   b1[vx] = b1[vx]+difx/5
   b1[vy] = b1[vy]+dify/5
-  !DoSmash(ball[], flix[], _)
  ENDIF
 FN.END
 
@@ -64,7 +61,9 @@ ARRAY.LOAD type$[],"WIFI: Connect to host", "WIFI: Be the host", "BLUETOOTH (slo
 SELECT conntype, type$[], "Select Mode"
 GOSUB StartWifi
 GOSUB StartBluetooth
-
+IF MOD(conntype, 2) = 0 | conntype=5
+ IsServer = 1
+ENDIF
 !XXXXXXXXXXXXXXXX Start Game Engine XXXXXXXXXXXXXXXXXX
 GR.OPEN 255, 0, 0, 0,0,1
 GR.SCREEN w, h
@@ -83,11 +82,11 @@ ballspeedlimit = 20
 
 GOSUB MakeKeys %makes keys to treat arrays like a class
 
-mystart = hhalf+hhalf/2
-ustart = hhalf-hhalf/2
-IF mod(conntype,2)=0
- mystart = hhalf-hhalf/2
- ustart = hhalf+hhalf/2
+mystart = hhalf-hhalf/2
+ustart = hhalf+hhalf/2
+IF isServer
+ mystart = hhalf+hhalf/2
+ ustart = hhalf-hhalf/2
 ENDIF
 ARRAY.LOAD ball[], -1, whalf,mystart,0,0,~
 w20,ballfrict, ballfrict
@@ -113,16 +112,22 @@ GR.TEXT.SIZE h/4
 
 RENDER:  %XXXXXXXXXX MAIN RENDER LOOP XXXXXXXX
 GR.CLS
-GR.COLOR 255,255,255,255,1
+GOSUB blue
 GR.CIRCLE ball[gn], ball[px], ball[py], ball[rad]
+GOSUB red
 GR.CIRCLE you[gn], you[px], you[py], you[rad]
+GR.COLOR 255,255,255,255,1
 GR.CIRCLE flix[gn], flix[px], flix[py], flix[rad]
+GR.COLOR 255,255,255,255,1
 ! l t r b, bounce vector
 GR.RECT walls[1], 0, 0, w, 10
 GR.RECT walls[2], w-10, 0, w, h
 GR.RECT walls[3], 0,h-10, w, h
 GR.RECT walls[4], 0,0,10,h
+
+GOSUB red
 GR.RECT goals[1], whalf-w20, 0, whalf+w20, w40
+GOSUB blue
 GR.RECT goals[2], whalf-w20, h-w40, whalf+w20, h
 
 GOSUB CheckTouch
@@ -137,12 +142,13 @@ CheckBalls(ball[], flix[])
 CheckWalls(flix[], walls[])
 CheckBalls(flix[], you[])
 
-GR.COLOR 25,255,255,255,1
 tstr$=FORMAT$("%",tscore)
 bstr$=FORMAT$("%",bscore)
 GR.GET.TEXTBOUNDS tstr$,tl,tt,tr,tb
 GR.GET.TEXTBOUNDS bstr$,bl,bt,br,bb
+GR.COLOR 35,255,0,0,1
 GR.TEXT.DRAW ttext[gn],ttext[px]-tl/2,ttext[py],tstr$
+GR.COLOR 35,0,0,255,1
 GR.TEXT.DRAW btext[gn],btext[px]-bl/2,btext[py],bstr$
 GR.RENDER
 
@@ -158,8 +164,8 @@ GOSUB HandleTCP
 GOSUB HandleBluetooth
 GOSUB SmoothFlix
 
-! did someone score? only server or freeplay checks
-IF mod(conntype, 2) = 0 | conntype=5
+! did someone score? only server checks
+IF IsServer
  IF GR_COLLISION(flix[gn], goals[1])
   bscore += 1
   GOSUB ResetFlix
@@ -214,39 +220,52 @@ youx    = VAL(WORD$(rmsg$, 1))
 youy    = VAL(WORD$(rmsg$, 2))
 youvx   = VAL(WORD$(rmsg$, 3))
 youvy   = VAL(WORD$(rmsg$, 4))
-uflixx  = VAL(WORD$(rmsg$, 5))
-uflixy  = VAL(WORD$(rmsg$, 6))
-uflixvx = VAL(WORD$(rmsg$, 7))
-uflixvy = VAL(WORD$(rmsg$, 8))
-utscore = VAL(WORD$(rmsg$, 9))
-ubscore = VAL(WORD$(rmsg$, 10))
 you[px] = youx/dataRes*w
 you[py] = youy/dataRes*h
 you[vx] = youvx/dataRes
 you[vy] = youvy/dataRes
-yourflix[px]=uflixx/dataRes*w
-yourflix[py]=uflixy/dataRes*h
-yourflix[vx]=uflixvx/dataRes
-yourflix[vy]=uflixvy/dataRes
-IF utscore > tscore
- tscore = utscore
- GOSUB ResetFlix
-ENDIF
-IF ubscore > bscore
- bscore = ubscore
- GOSUB ResetFlix
+
+IF IsServer <> 1
+ uflixx  = VAL(WORD$(rmsg$, 5))
+ uflixy  = VAL(WORD$(rmsg$, 6))
+ uflixvx = VAL(WORD$(rmsg$, 7))
+ uflixvy = VAL(WORD$(rmsg$, 8))
+ utscore = VAL(WORD$(rmsg$, 9))
+ ubscore = VAL(WORD$(rmsg$, 10))
+ yourflix[px]=uflixx/dataRes*w
+ yourflix[py]=uflixy/dataRes*h
+ yourflix[vx]=uflixvx/dataRes
+ yourflix[vy]=uflixvy/dataRes
+ IF utscore > tscore
+  tscore = utscore
+  GOSUB ResetFlix
+ ENDIF
+ IF ubscore > bscore
+  bscore = ubscore
+  GOSUB ResetFlix
+ ENDIF
 ENDIF
 RETURN
 
-SmoothFlix: %interps both players flix data
-flix[px] = (flix[px] + yourflix[px])/2
-flix[py] = (flix[py] + yourflix[py])/2
-IF ABS(flix[vx]) < ABS(yourflix[vx])
- flix[vx] = yourflix[vx]
-ENDIF
-IF ABS(flix[vy]) < ABS(yourflix[vy])
- flix[vy] = yourflix[vy]
-ENDIF
+SmoothFlix: 
+
+%interps both players flix data
+!flix[px] = (flix[px] + yourflix[px])/2
+!flix[py] = (flix[py] + yourflix[py])/2
+!IF ABS(flix[vx]) < ABS(yourflix[vx]) %if hit make sure it counts
+! flix[vx] = yourflix[vx]
+!ENDIF
+!IF ABS(flix[vy]) < ABS(yourflix[vy])
+! flix[vy] = yourflix[vy]
+!ENDIF
+RETURN
+
+blue:
+GR.COLOR 255,0,50,255,1
+RETURN
+
+red:
+GR.COLOR 255,255,0,0,1
 RETURN
 
 HandleTCP:
