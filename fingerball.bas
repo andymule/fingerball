@@ -1,6 +1,33 @@
 !DEBUG.ON      % enables all debug calls
 DEBUG.ECHO.ON  % only actually enabled if debug.on
 !TODO flip game so current user is always on bottom of screen
+!XXXXXXXXXXXX MENU UI XXXXXXXXXXXXXXXXXXXXXXXXX
+!GW_COLOR$ = "#101010"
+GW_SILENT_LOAD = 1
+INCLUDE "GW.bas"
+GW_LOAD_THEME ("native-droid-dark-red")
+GW_DEFAULT_TRANSITIONS("page=fade, panel=fade, dialog_message=fade")
+page = GW_NEW_PAGE()
+GW_ADD_TITLEBAR (page, GW_ADD_BAR_TITLE$("FINGERBALL 20K"))
+GW_START_CENTER(page)
+GW_ADD_TEXT (page, "Ready your fingers... Ready your balls...")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_CENTER_PAGE_VER(page)
+GW_ADD_BUTTON (page, "Host the server", "wifihost")
+GW_ADD_BUTTON (page, "Connect to host", "wificlient")
+!GW_ADD_BUTTON (page, "Bluetooth,..., "bluetooth")
+GW_STOP_CENTER(page)
+GW_RENDER(page)
+DO
+r$ = GW_WAIT_ACTION$()
+until r$ = "BACK"
+END
+
 !XXXXXXXXXXXX START FUNCTION DEFS XXXXXXXXXXXXXXX
 FN.DEF UpdatePhysics (b[])
  GOSUB MakeKeys %makes keys to treat arrays like a class
