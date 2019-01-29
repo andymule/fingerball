@@ -59,9 +59,6 @@ IF r$="BACK"
  END
 ENDIF
 
-!GOSUB StartWifi
-!GOSUB StartBluetooth
-!StartWifi:
 IF IsClient
  INPUT "Enter Host IP:", hostip$
  SOCKET.CLIENT.CONNECT hostip$, 12345
@@ -187,7 +184,7 @@ SENDSTR$ = sNum$(ball[px],w) + " " + sNum$(ball[py],h)~
 ! store current flix in case we dont get an update
 ARRAY.COPY flix[], yourflix[]
 GOSUB HandleTCP
-GOSUB HandleBluetooth
+!GOSUB HandleBluetooth
 
 ! did someone score? only server checks
 IF IsServer | IsFreeplay
@@ -219,8 +216,8 @@ CheckTouch: %TODO circular speed limit
 GR.TOUCH flag, touch[px], touch[py]
 IF flag
  !TODO better controls, powerup shot
- ball[vx] = touch[px]-ball[px]
- ball[vy] = touch[py]-ball[py]
+ ball[vx] = (touch[px]-ball[px])/w*200
+ ball[vy] = (touch[py]-ball[py])/h*200
  totalv = ABS(ball[vx])+ABS(ball[vy])+0.00001
  xpercent = ABS(ball[vx]/totalv)
  ypercent = ABS(ball[vy]/totalv)
@@ -281,7 +278,7 @@ GR.COLOR 255,255,0,0,1
 RETURN
 
 HandleTCP:
-IF conntype = 1
+IF IsClient
  SOCKET.CLIENT.WRITE.LINE sendstr$
  SOCKET.CLIENT.READ.READY readyflag
  WHILE readyflag
@@ -290,7 +287,7 @@ IF conntype = 1
   SOCKET.CLIENT.READ.READY readyflag
  REPEAT 
 ENDIF
-IF conntype = 2
+IF IsServer
  SOCKET.SERVER.WRITE.LINE sendstr$
  SOCKET.SERVER.READ.READY readyflag
  WHILE readyflag
@@ -299,53 +296,6 @@ IF conntype = 2
   SOCKET.SERVER.READ.READY readyflag
  REPEAT
 ENDIF
-RETURN
-
-HandleBluetooth:
-IF conntype = 3 | conntype = 4 
- BT.WRITE SENDSTR$
- DO
-  BT.READ.READY rr
-  IF rr
-   BT.READ.BYTES rmsg$
-   GOSUB ParseMessage
-  ENDIF
- UNTIL rr = 0
-ENDIF
-RETURN
-
-StartBluetooth:
-IF conntype = 3 | conntype = 4
- BT.OPEN
-ENDIF
-IF conntype = 3
- BT.CONNECT
-ENDIF
-IF conntype = 4 | conntype = 3
- ln = 0
- DO
-  BT.STATUS s
-  IF s = 1
-   ln = ln + 1
-   PRINT "Listening "; INT(ln); " seconds..."
-  ELSEIF s = 2
-   PRINT "Connecting"
-  ELSEIF s = 3
-   PRINT "Connected!!!"
-  ELSE
-   PRINT s
-  ENDIF
-  PAUSE 1000
- UNTIL s = 3
- BT.DEVICE.NAME device$
-ENDIF
-
-!todo make sure still open
-! BT.STATUS s
-! IF s<> 3
-!  PRINT "Connection lost"
-!  GOTO new_connection
-! ENDIF
 RETURN
 
 FnInit:
