@@ -8,24 +8,38 @@ INCLUDE "GW.bas"
 GW_LOAD_THEME ("native-droid-dark-red")
 GW_DEFAULT_TRANSITIONS("page=fade, panel=overlay, dialog_message=fade")
 page = GW_NEW_PAGE()
-!GW_USE_THEME_CUSTO_ONCE("icon=back iconpos=left")
-titlebar = GW_ADD_TITLEBAR (page, GW_ADD_BAR_TITLE$("FINGERBALL 20K"))
 GW_START_CENTER(page)
+titlebar = GW_ADD_TITLEBAR (page, GW_ADD_BAR_TITLE$("FINGERBALL"))
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
 GW_ADD_TEXT (page, "Ready your fingers... Ready your balls...")
-!spinner = GW_ADD_SPINNER (page, "Hosting Server at:")
 GW_ADD_TEXT (page, "")
 GW_ADD_TEXT (page, "")
 GW_ADD_TEXT (page, "")
 GW_ADD_TEXT (page, "")
 GW_ADD_TEXT (page, "")
 GW_ADD_TEXT (page, "")
-GW_CENTER_PAGE_VER(page)
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
+GW_ADD_TEXT (page, "")
 GW_ADD_BUTTON (page, "Host the server", "wifihost")
 GW_ADD_BUTTON (page, "Connect to host", "wificlient")
 GW_ADD_BUTTON (page, "Freeplay", "freeplay")
 GW_STOP_CENTER(page)
 ARRAY.LOAD dlgb$[], "ABORT>BACK"
-dialog = GW_ADD_DIALOG_MESSAGE (page,"Host IP", "",dlgb$[])
+dialog = GW_ADD_DIALOG_MESSAGE (page,"Hosting server @ IP", "",dlgb$[])
 GW_RENDER(page)
 WaitAction:
 r$ = GW_WAIT_ACTION$()
@@ -41,6 +55,7 @@ ENDIF
 IF r$="BACK"
  END
 ENDIF
+GW_ACTION$()  % clear the action flag
 
 
 !GOSUB StartWifi
@@ -49,7 +64,6 @@ ENDIF
 IF IsClient
  INPUT "Enter Host IP:", hostip$
  SOCKET.CLIENT.CONNECT hostip$, 12345
- PRINT "CONNECTED!"
 ENDIF
 
 IF IsServer
@@ -57,7 +71,6 @@ IF IsServer
  SOCKET.SERVER.CREATE 12345
  GW_MODIFY (dialog, "text", myip$)
  GW_SHOW_dialog(dialog)
- !PRINT "waiting for connection...."
  SOCKET.SERVER.CONNECT 0
  DO
   SOCKET.SERVER.STATUS st
@@ -68,18 +81,10 @@ IF IsServer
   ENDif
   UNTIL st=3
   SOCKET.SERVER.CLIENT.IP youip$
-  !PRINT "CONNECTED! to: " + youip$
   !maxclock = CLOCK() + 10000
-  !do 
-  ! socket.server.read.ready readyflag
   ! if CLOCK() > maxclock
-  !  print "READ TIME OUT"
-  !  end
-  ! endif
-  !until flag
-  ! todo detect loss of connection
- ENDIF
- !RETURN
+  ! todo detect timeout
+ ENDif
 
  loadgame:
  HTML.CLOSE
@@ -89,6 +94,7 @@ IF IsServer
  !XXXXXXXXXXXXXXXX Start Game Engine XXXXXXXXXXXXXXXXXX
  GR.OPEN 255, 0, 0, 0,0,1
  GR.SCREEN w, h
+ GR.SET.ANTIALIAS 1
  whalf = w/2
  hhalf = h/2
  h20 = h/20 
@@ -185,7 +191,7 @@ IF IsServer
  GOSUB SmoothFlix
 
  ! did someone score? only server checks
- IF IsServer
+ IF IsServer | IsFreeplay
   IF GR_COLLISION(flix[gn], goals[1])
    bscore += 1
    GOSUB ResetFlix
@@ -265,19 +271,6 @@ IF IsServer
    GOSUB ResetFlix
   ENDIF
  ENDIF
- RETURN
-
- SmoothFlix: 
-
- %interps both players flix data
- !flix[px] = (flix[px] + yourflix[px])/2
- !flix[py] = (flix[py] + yourflix[py])/2
- !IF ABS(flix[vx]) < ABS(yourflix[vx]) %if hit make sure it counts
- ! flix[vx] = yourflix[vx]
- !ENDIF
- !IF ABS(flix[vy]) < ABS(yourflix[vy])
- ! flix[vy] = yourflix[vy]
- !ENDIF
  RETURN
 
  blue:
