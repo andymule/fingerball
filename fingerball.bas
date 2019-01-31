@@ -273,6 +273,7 @@ ARRAY.COPY flix[], yourflix[]
 RETURN 
 
 ParseMessage: %restore and load network msg data
+rmsg$ = DECODE$(rmsg$, "UTF-8")
 youx    = VAL(WORD$(rmsg$, 1))
 youy    = VAL(WORD$(rmsg$, 2))
 youvx   = VAL(WORD$(rmsg$, 3))
@@ -324,11 +325,11 @@ GR.COLOR alpha,85,255,255,1
 RETURN
 
 BuildSendString:
-SENDSTR$ = sNum$(ball[px],w) + " " + sNum$(ball[py],h)~
+SENDSTR$ = ENCODE$(sNum$(ball[px],w) + " " + sNum$(ball[py],h)~
 + " " + sNum$(ball[vx],1) + " " + sNum$(ball[vy],1)~
 + " " + sNum$(flix[px],w) + " " + sNum$(flix[py],h)~
 + " " + sNum$(flix[vx],1) + " " + sNum$(flix[vy],1)~
-+ " " + STR$(tscore) + " " + STR$(bscore) + "\n"
++ " " + STR$(tscore) + " " + STR$(bscore) + "\n", "UTF-8")
 RETURN
 
 HandleTCP:
@@ -336,7 +337,7 @@ IF IsClient
  SOCKET.CLIENT.WRITE.bytes sendstr$
  SOCKET.CLIENT.READ.READY readyflag
  WHILE readyflag
-  SOCKET.CLIENT.READ.byes rmsg$
+  SOCKET.CLIENT.READ.bytes rmsg$
   GOSUB ParseMessage
   SOCKET.CLIENT.READ.READY readyflag
  REPEAT 
