@@ -362,8 +362,8 @@ FN.DEF CheckBalls (b1[], b2[])
   ARRAY.LOAD vib[],1,3
   VIBRATE vib[], -1
   !TODO better energy transfer
-  b2[vx] = b2[vx]*difx/5
-  b2[vy] = b2[vy]*dify/5
+  b2[vx] = b2[vx]-difx/5
+  b2[vy] = b2[vy]-dify/5
   b1[vx] = b1[vx]+difx/5
   b1[vy] = b1[vy]+dify/5
  ENDIF
