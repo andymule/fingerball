@@ -115,6 +115,7 @@ HTML.CLOSE %Close GW Stuff as late as possible
 
 RENDER:  %XXXXXXXXXX MAIN RENDER LOOP XXXXXXXXXXXXXXXXXXXXX
 GR.CLS
+GOSUB FlixDraw
 GOSUB SceneDraw
 GR.RENDER
 GOSUB CheckTouch
@@ -129,27 +130,29 @@ call CheckWalls(flix[], walls[], w, h)
 call CheckBalls(ball[], flix[])
 call CheckBalls(flix[], you[])
 
+tscored = 0
+! did someone score? only server checks
+IF IsServer | IsFreeplay
+ IF GR_COLLISION(flix[gn], goals[1])
+  bscore += 1
+  tscored = 1
+ ENDIF
+ IF GR_COLLISION(flix[gn], goals[2])
+  tscore += 1
+  tscored = 2
+ ENDIF
+ENDIF
+
 !XXXXXXXXXXXXXX TRANSMIT GAME DATA XXXXXXXXXXXX
 GoSub BuildSendString
 ! store current flix in case we dont get an update
 ARRAY.COPY flix[], yourflix[]
 GOSUB HandleTCP
 
-! did someone score? only server checks
-IF IsServer | IsFreeplay
- IF GR_COLLISION(flix[gn], goals[1])
-  bscore += 1
-  tscored = 1
-  GOSUB GoalRender
-  GOSUB ResetFlix
- ENDIF
- IF GR_COLLISION(flix[gn], goals[2])
-  tscore += 1
-  tscored = 0
+if tscored > 0
   GOSUB goalRender
   GOSUB ResetFlix
- ENDIF
-ENDIF
+endif
 
 GOTO render
 !XXXXXXXXXXXXXX END MAIN LOOP XXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -159,11 +162,9 @@ GOSUB blue
 GR.CIRCLE ball[gn], ball[px], ball[py], ball[rad]
 GOSUB red
 GR.CIRCLE you[gn], you[px], you[py], you[rad]
-GR.COLOR 255,255,255,255,1
-GR.CIRCLE flix[gn], flix[px], flix[py], flix[rad]
-GR.COLOR 255,255,255,255,1
 ! l t r b, bounce vector
 !WallWidth = 10 %Made in KEYS for now, TODO fix globals?
+gosub white
 GR.RECT walls[1], 0, 0, w, WallWidth
 GR.RECT walls[2], w-WallWidth, 0, w, h
 GR.RECT walls[3], 0,h-WallWidth, w, h
@@ -185,13 +186,18 @@ GR.TEXT.DRAW btext[gn],btext[px]-bl/2,btext[py],bstr$
 alpha = temp
 RETURN
 
+FlixDraw:
+ gosub white
+ GR.CIRCLE flix[gn], flix[px], flix[py], flix[rad]
+RETURN
+
 GoalRender:
 GR.CLS
 pnum=20*4 
 LIST.CREATE N, plist
 FOR pindex=1 TO pnum
  LIST.ADD plist, whalf
- if tscored
+ if tscored=1
   rlayer=0
   LIST.ADD plist, 0
   LIST.ADD plist, (RND()-0.5)*100
@@ -219,7 +225,7 @@ FOR alpha = 255 TO 0 STEP -10
  NEXT pindex
  temp = alpha
  alpha = 5
- if tscored
+ if tscored=1
   GOSUB redalpha
   rlayer+=h/40
   GR.RECT walls[1], 0, 0, w, rlayer
@@ -273,7 +279,6 @@ ARRAY.COPY flix[], yourflix[]
 RETURN 
 
 ParseMessage: %restore and load network msg data
-rmsg$ = DECODE$(rmsg$, "UTF-8")
 youx    = VAL(WORD$(rmsg$, 1))
 youy    = VAL(WORD$(rmsg$, 2))
 youvx   = VAL(WORD$(rmsg$, 3))
@@ -296,11 +301,11 @@ IF IsClient
  flix[vy]=uflixvy/dataRes
  IF utscore > tscore
   tscore = utscore
-  GOSUB ResetFlix
+  tscored = 1
  ENDIF
  IF ubscore > bscore
   bscore = ubscore
-  GOSUB ResetFlix
+  tscored = 2
  ENDIF
 ENDIF
 RETURN
@@ -325,28 +330,28 @@ GR.COLOR alpha,85,255,255,1
 RETURN
 
 BuildSendString:
-SENDSTR$ = ENCODE$(sNum$(ball[px],w) + " " + sNum$(ball[py],h)~
+SENDSTR$ = sNum$(ball[px],w) + " " + sNum$(ball[py],h)~
 + " " + sNum$(ball[vx],1) + " " + sNum$(ball[vy],1)~
 + " " + sNum$(flix[px],w) + " " + sNum$(flix[py],h)~
 + " " + sNum$(flix[vx],1) + " " + sNum$(flix[vy],1)~
-+ " " + STR$(tscore) + " " + STR$(bscore) + "\n", "UTF-8")
++ " " + STR$(INT(tscore)) + " " + STR$(INT(bscore))
 RETURN
 
 HandleTCP:
 IF IsClient
- SOCKET.CLIENT.WRITE.bytes sendstr$
+ SOCKET.CLIENT.WRITE.line sendstr$
  SOCKET.CLIENT.READ.READY readyflag
  WHILE readyflag
-  SOCKET.CLIENT.READ.bytes rmsg$
+  SOCKET.CLIENT.READ.line rmsg$
   GOSUB ParseMessage
   SOCKET.CLIENT.READ.READY readyflag
  REPEAT 
 ENDIF
 IF IsServer
- SOCKET.SERVER.WRITE.bytes sendstr$
+ SOCKET.SERVER.WRITE.line sendstr$
  SOCKET.SERVER.READ.READY readyflag
  WHILE readyflag
-  SOCKET.SERVER.READ.bytes rmsg$
+  SOCKET.SERVER.READ.line rmsg$
   GOSUB ParseMessage
   SOCKET.SERVER.READ.READY readyflag
  REPEAT
