@@ -1,4 +1,4 @@
-DEBUG.ON      % enables all debug calls
+!DEBUG.ON      % enables all debug calls
 DEBUG.ECHO.ON  % only actually enabled if debug.on
 !TODO flip game so current user is always on bottom of screen
 !XXXXXXXXXXXX MENU UI XXXXXXXXXXXXXXXXXXXXXXXXX
@@ -77,9 +77,9 @@ hhalf = h/2
 h20 = h/20 
 w20 = w/20
 w40 = w/40
-di_height = 2560
-di_width = 1440 
-GR.SCALE w/di_width, h/di_height
+!di_height = 2560
+!di_width = 1440 
+!GR.SCALE w/di_width, h/di_height
 GR.SET.STROKE w40/2
 !todo scale touch? scale stroke?
 
@@ -119,15 +119,15 @@ GOSUB SceneDraw
 GR.RENDER
 GOSUB CheckTouch
 
-UpdatePhysics(ball[])
-CheckWalls(ball[], walls[], w, h)
-UpdatePhysics(you[])
-CheckWalls(you[], walls[], w, h)
-CheckBalls(ball[], you[])
-UpdatePhysics(flix[])
-CheckWalls(flix[], walls[], w, h)
-CheckBalls(ball[], flix[])
-CheckBalls(flix[], you[])
+call UpdatePhysics(ball[])
+call CheckWalls(ball[], walls[], w, h)
+call UpdatePhysics(you[])
+call CheckWalls(you[], walls[], w, h)
+call CheckBalls(ball[], you[])
+call UpdatePhysics(flix[])
+call CheckWalls(flix[], walls[], w, h)
+call CheckBalls(ball[], flix[])
+call CheckBalls(flix[], you[])
 
 !XXXXXXXXXXXXXX TRANSMIT GAME DATA XXXXXXXXXXXX
 GoSub BuildSendString
@@ -139,14 +139,12 @@ GOSUB HandleTCP
 IF IsServer | IsFreeplay
  IF GR_COLLISION(flix[gn], goals[1])
   bscore += 1
-  bscored = 0
   tscored = 1
   GOSUB GoalRender
   GOSUB ResetFlix
  ENDIF
  IF GR_COLLISION(flix[gn], goals[2])
   tscore += 1
-  bscored = 1
   tscored = 0
   GOSUB goalRender
   GOSUB ResetFlix
@@ -154,7 +152,7 @@ IF IsServer | IsFreeplay
 ENDIF
 
 GOTO render
-!XXXXXXXXXXXXXXX END MAIN LOOP XXXXXXXXXXXXXXXXXXXXXXXXXX
+!XXXXXXXXXXXXXX END MAIN LOOP XXXXXXXXXXXXXXXXXXXXXXXXXX
 
 SceneDraw:
 GOSUB blue
@@ -188,14 +186,22 @@ alpha = temp
 RETURN
 
 GoalRender:
-rlayer=0
+GR.CLS
 pnum=20*4 
 LIST.CREATE N, plist
 FOR pindex=1 TO pnum
  LIST.ADD plist, whalf
- LIST.ADD plist, 0
- LIST.ADD plist, (RND()-0.5)*100
- LIST.ADD plist, (RND()-0.5)*5+30
+ if tscored
+  rlayer=0
+  LIST.ADD plist, 0
+  LIST.ADD plist, (RND()-0.5)*100
+  LIST.ADD plist, RND()*10+25
+ else
+  rlayer=h
+  LIST.ADD plist, h
+  LIST.ADD plist, (RND()-0.5)*100
+  LIST.ADD plist, (RND()*-10)-25
+ endif
 NEXT pindex
 FOR alpha = 255 TO 0 STEP -10
  GOSUB whitealpha
@@ -212,11 +218,16 @@ FOR alpha = 255 TO 0 STEP -10
   !GR.POINT garbage, plx, ply
  NEXT pindex
  temp = alpha
- alpha = 10
- GOSUB redalpha
- rlayer+=h/40
- ! l t r b, bounce vector
- GR.RECT walls[1], 0, 0, w, rlayer
+ alpha = 5
+ if tscored
+  GOSUB redalpha
+  rlayer+=h/40
+  GR.RECT walls[1], 0, 0, w, rlayer
+ else
+  GOSUB bluealpha %l t r b
+  rlayer-=h/40
+  GR.RECT walls[1], 0, rlayer, w, h
+ endif
  alpha = temp
  GOSUB SceneDraw
  GR.RENDER
@@ -317,24 +328,24 @@ SENDSTR$ = sNum$(ball[px],w) + " " + sNum$(ball[py],h)~
 + " " + sNum$(ball[vx],1) + " " + sNum$(ball[vy],1)~
 + " " + sNum$(flix[px],w) + " " + sNum$(flix[py],h)~
 + " " + sNum$(flix[vx],1) + " " + sNum$(flix[vy],1)~
-+ " " + STR$(tscore) + " " + STR$(bscore)
++ " " + STR$(tscore) + " " + STR$(bscore) + "\n"
 RETURN
 
 HandleTCP:
 IF IsClient
- SOCKET.CLIENT.WRITE.LINE sendstr$
+ SOCKET.CLIENT.WRITE.bytes sendstr$
  SOCKET.CLIENT.READ.READY readyflag
  WHILE readyflag
-  SOCKET.CLIENT.READ.LINE rmsg$
+  SOCKET.CLIENT.READ.byes rmsg$
   GOSUB ParseMessage
   SOCKET.CLIENT.READ.READY readyflag
  REPEAT 
 ENDIF
 IF IsServer
- SOCKET.SERVER.WRITE.LINE sendstr$
+ SOCKET.SERVER.WRITE.bytes sendstr$
  SOCKET.SERVER.READ.READY readyflag
  WHILE readyflag
-  SOCKET.SERVER.READ.LINE rmsg$
+  SOCKET.SERVER.READ.bytes rmsg$
   GOSUB ParseMessage
   SOCKET.SERVER.READ.READY readyflag
  REPEAT
