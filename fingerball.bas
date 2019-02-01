@@ -1,12 +1,14 @@
 !DEBUG.ON      % enables all debug calls
 DEBUG.ECHO.ON  % only actually enabled if debug.on
 !TODO flip game so current user is always on bottom of screen
+GR.OPEN 255, 0, 0, 0,0,1
 !XXXXXXXXXXXX MENU UI XXXXXXXXXXXXXXXXXXXXXXXXX
 GW_COLOR$ = "#000000"
 GW_SILENT_LOAD = 1
 INCLUDE "GW.bas"
-GW_LOAD_THEME ("native-droid-dark-red")
+Html.orientation 1
 GW_DEFAULT_TRANSITIONS("page=fade, panel=overlay, dialog_message=fade")
+GW_LOAD_THEME ("native-droid-dark-red")
 page = GW_NEW_PAGE()
 GW_START_CENTER(page)
 titlebar = GW_ADD_TITLEBAR (page, GW_ADD_BAR_TITLE$("FINGERBALL"))
@@ -46,11 +48,13 @@ ENDIF
 
 IF IsClient
  INPUT "Enter Host IP:", hostip$
+ if hostip$ = "" then goto waitaction
  SOCKET.CLIENT.CONNECT hostip$, 12345
 ENDIF
 
 IF IsServer
  SOCKET.MYIP myip$
+
  SOCKET.SERVER.CREATE 12345
  GW_MODIFY (dialog, "text", myip$)
  GW_SHOW_dialog(dialog)
@@ -69,7 +73,7 @@ ENDIF
 GOSUB FnInit %declares all our util functions
 
 !XXXXXXXXXXXXXXXX Start Game Engine Vars XXXXXXXXXX
-GR.OPEN 255, 0, 0, 0,0,1
+!GR.OPEN 255, 0, 0, 0,0,1
 GR.SCREEN w, h
 GR.SET.ANTIALIAS 1
 whalf = w/2
@@ -421,5 +425,7 @@ FN.END
 RETURN
 
 ONERROR:
-PRINT GETERROR$()
+error$ = GETERROR$()
+if error$ = "Input dialog cancelled" then goto waitaction
+print error$
 END
